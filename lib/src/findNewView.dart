@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_example_swipe_card/main.dart';
 
@@ -17,6 +18,8 @@ class _FindNewViewState extends State<FindNewView>
   Animation<double> bottom;
   Animation<double> width;
   double dragValue = 1;
+  bool draggingLeft = false;
+
   @override
   void initState() {
     super.initState();
@@ -83,35 +86,13 @@ class _FindNewViewState extends State<FindNewView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          InkWell(
-            onTap: () async {
-              if (flag == 0) {
-                // setState(
-                //   () {
-                //     flag = 1;
-                //   },
-                // );
-              } else if (flag == 1) {
-                setState(
-                  () {
-                    flag = 0;
-                  },
-                );
-              }
-              try {
-                await _buttonController.forward();
-              } on TickerCanceled {
-                print('error');
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'bumble',
-                style: TextStyle(
-                  fontSize: 32.0,
-                  color: Colors.amber,
-                ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'bumble',
+              style: TextStyle(
+                fontSize: 32.0,
+                color: Colors.amber,
               ),
             ),
           ),
@@ -127,24 +108,29 @@ class _FindNewViewState extends State<FindNewView>
             child: GestureDetector(
               onHorizontalDragUpdate: (value) {
                 if (value.primaryDelta >= 0) {
+                  if (draggingLeft) {
+                    dragValue = 0;
+                  }
                   flag = 1;
                   dragValue += value.primaryDelta;
+                  draggingLeft = false;
                   setState(() {});
                 } else if (value.primaryDelta <= 0) {
+                  if (!draggingLeft) {
+                    dragValue = 0;
+                  }
                   flag = 0;
                   dragValue++;
+                  draggingLeft = true;
                   setState(() {});
                 }
-                print(dragValue);
               },
               onHorizontalDragEnd: (value) {
-                print('drag end');
                 setState(() {
                   dragValue = 0.0;
                 });
               },
               onHorizontalDragCancel: () {
-                print('drag cancel');
                 setState(() {
                   dragValue = 0.0;
                 });
@@ -159,6 +145,8 @@ class _FindNewViewState extends State<FindNewView>
                     rotate.value,
                     width.value,
                     rotate.value < -10 ? 0.1 : 0.0,
+                    swipeRightAnimation,
+                    swipeLeftAnimation,
                   ),
                 ],
               ),
@@ -177,7 +165,10 @@ class _FindNewViewState extends State<FindNewView>
     double rotation,
     double width,
     double skew,
+    Function swipeRight,
+    Function swipeLeft,
   ) {
+    print('$flag');
     Positioned position = Positioned(
       bottom: bottom,
       right: flag == 0
@@ -209,6 +200,29 @@ class _FindNewViewState extends State<FindNewView>
             child: Container(
               height: Valueer.size.height * 0.7,
               width: Valueer.size.width - 40,
+              padding: EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      FlatButton(
+                        padding: EdgeInsets.all(12.0),
+                        color: Colors.white,
+                        onPressed: swipeLeft,
+                        child: Text('Not In'),
+                      ),
+                      FlatButton(
+                        padding: EdgeInsets.all(12.0),
+                        color: Colors.white,
+                        onPressed: swipeRight,
+                        child: Text('In'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -216,5 +230,31 @@ class _FindNewViewState extends State<FindNewView>
     );
 
     return position;
+  }
+
+  void swipeRightAnimation() async {
+    setState(
+      () {
+        flag = 1;
+      },
+    );
+    try {
+      await _buttonController.forward();
+    } on TickerCanceled {
+      print('error');
+    }
+  }
+
+  void swipeLeftAnimation() async {
+    setState(
+      () {
+        flag = 0;
+      },
+    );
+    try {
+      await _buttonController.forward();
+    } on TickerCanceled {
+      print('error');
+    }
   }
 }
